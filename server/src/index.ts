@@ -70,6 +70,7 @@ interface AnnouncementBody {
 
 interface FeedbackBody extends DeviceBody {
   content?: string;
+  attachments?: unknown[];
 }
 
 interface AdminUserUpdateBody {
@@ -521,10 +522,10 @@ app.post("/feedback", async (request, reply) => {
   try {
     const body = request.body as FeedbackBody;
     const deviceId = getDeviceId(request);
-    if (!body.content?.trim()) {
+    if (!body.content?.trim() && !body.attachments?.length) {
       throw new Error("请先写一点反馈内容。");
     }
-    return { ok: true, feedback: await createFeedback(deviceId, body.content) };
+    return { ok: true, feedback: await createFeedback(deviceId, body.content ?? "", body.attachments) };
   } catch (error) {
     reply.code(400);
     return { error: error instanceof Error ? error.message : "反馈发送失败。" };

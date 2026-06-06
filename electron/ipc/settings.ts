@@ -1,7 +1,7 @@
 import { app, ipcMain, shell } from "electron";
 import { downloadAndInstallUpdate } from "../services/updateDownloader.js";
 import { assertValidAccount } from "../../src/lib/accountValidation.js";
-import type { AnnouncementInfo, AppSettings, AuthResult, PlatformStatus, TestConnectionResult, UpdateInfo } from "../../src/lib/desktopApi.js";
+import type { AnnouncementInfo, AppSettings, AuthResult, FeedbackAttachment, PlatformStatus, TestConnectionResult, UpdateInfo } from "../../src/lib/desktopApi.js";
 import { apiUrl, platformHeaders, platformUrl } from "../services/platformClient.js";
 import { clearAuth, getSettings, saveAuth, saveSettings } from "../services/settingsStore.js";
 
@@ -90,11 +90,11 @@ async function getAnnouncement(): Promise<AnnouncementInfo> {
   return normalizeAnnouncement(latest);
 }
 
-async function submitFeedback(content: string) {
+async function submitFeedback(content: string, attachments: FeedbackAttachment[] = []) {
   const response = await fetch(await platformUrl("feedback"), {
     method: "POST",
     headers: await platformHeaders(),
-    body: JSON.stringify({ content })
+    body: JSON.stringify({ content, attachments })
   });
   if (!response.ok) {
     throw new Error(await parseError(response, "反馈发送失败。"));
@@ -197,7 +197,7 @@ export function registerSettingsIpc() {
     return downloadAndInstallUpdate(url, sha256);
   });
   ipcMain.handle("announcements:latest", () => getAnnouncement());
-  ipcMain.handle("feedback:submit", (_event, content: string) => submitFeedback(content));
+  ipcMain.handle("feedback:submit", (_event, content: string, attachments?: FeedbackAttachment[]) => submitFeedback(content, attachments));
   ipcMain.handle("updates:check", () => checkForUpdate());
   ipcMain.handle("auth:register", (_event, username: string, password: string) => authRequest("auth/register", username, password));
   ipcMain.handle("auth:login", (_event, username: string, password: string) => authRequest("auth/login", username, password));

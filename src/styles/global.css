@@ -228,9 +228,9 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .page { height: 100%; min-height: 0; display: grid; grid-template-rows: 72px minmax(0, 1fr); gap: 16px; }
 .compact-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 6px; }
 .compact-heading h2 { margin: 4px 0 0; color: var(--ink); font-size: 28px; line-height: 1.12; letter-spacing: -.03em; }
-.compact-heading p { margin: 0; max-width: 470px; color: var(--muted); line-height: 1.6; font-size: 13px; }
-.heading-side { position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; }
-.heading-side p { min-width: 0; }
+.compact-heading p { margin: 0; color: var(--muted); line-height: 1.6; font-size: 13px; }
+.heading-side { position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; flex: 1; }
+.heading-side p { position: relative; top: -8px; min-width: 0; margin-left: auto; text-align: right; white-space: nowrap; overflow: visible; }
 .eyebrow { color: var(--accent); font-size: 12px; font-weight: 900; letter-spacing: .12em; }
 
 .workspace-layout { min-height: 0; display: grid; grid-template-columns: 154px minmax(0, 1fr); gap: 14px; }
@@ -1043,7 +1043,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 
 
 
-.flower-support { position: relative; flex: 0 0 auto; z-index: 20; pointer-events: none; }
+.flower-support { position: relative; top: 24px; flex: 0 0 auto; z-index: 20; pointer-events: auto; }
 .flower-support-button { pointer-events: auto; position: relative; min-width: 104px; height: 32px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 13px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; color: var(--muted); background: var(--panel-strong); box-shadow: 0 10px 24px color-mix(in srgb, var(--shadow) 56%, transparent), inset 0 1px 0 rgba(255,255,255,.66); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease; }
 .flower-support-button:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--accent) 34%, var(--line)); background: color-mix(in srgb, var(--panel-strong) 88%, var(--accent)); box-shadow: 0 14px 30px color-mix(in srgb, var(--shadow) 72%, transparent), inset 0 1px 0 rgba(255,255,255,.72); }
 .flower-support-bloom { color: var(--accent); font-size: 14px; line-height: 1; text-shadow: none; }
@@ -1053,6 +1053,11 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .flower-support-card h3 { margin: 0; color: var(--ink); font-size: 20px; }
 .flower-support-card p { margin: 0; color: var(--muted); font-weight: 800; line-height: 1.7; font-size: 13px; }
 .flower-support-card textarea { width: 100%; resize: none; border: 1px solid var(--line); border-radius: 18px; padding: 12px; background: var(--soft); color: var(--ink); outline: none; line-height: 1.7; }
+.flower-support-drop { display: grid !important; justify-content: stretch !important; gap: 8px !important; min-height: 52px; padding: 10px; border: 1px dashed color-mix(in srgb, var(--accent) 36%, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--soft) 86%, transparent); color: var(--muted); font-size: 12px; font-weight: 900; }
+.flower-support-drop.has-images { border-style: solid; }
+.flower-support-thumbs { display: flex !important; justify-content: flex-start !important; gap: 8px !important; flex-wrap: wrap; }
+.flower-support-thumbs button { width: 46px; height: 46px; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); cursor: pointer; }
+.flower-support-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .flower-support-card div { display: flex; justify-content: flex-end; gap: 8px; }
 .flower-support-card div button:not(.primary-button) { min-height: 38px; padding: 0 14px; border-radius: 999px; background: var(--soft); color: var(--muted); font-weight: 900; }
 .theme-night .flower-support-button { color: var(--ink); background: var(--panel-strong); border-color: var(--line); box-shadow: 0 12px 30px rgba(0,0,0,.28); }
@@ -1060,6 +1065,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .theme-night .flower-support-card { background: #111936; border-color: var(--line); box-shadow: 0 28px 80px rgba(0,0,0,.42); }
 .theme-night .flower-support-card::after { background: #111936; border-color: rgba(172, 196, 255, .22); }
 .theme-night .flower-support-card textarea { background: rgba(105, 125, 255, .12); border-color: rgba(172, 196, 255, .18); }
+.theme-night .flower-support-drop { background: rgba(105, 125, 255, .1); border-color: rgba(172, 196, 255, .22); }
 @keyframes flowerSupportSway { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
 @keyframes flowerCardPop { from { opacity: 0; transform: translateY(-8px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 

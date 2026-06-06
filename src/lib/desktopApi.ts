@@ -193,6 +193,14 @@ export interface AnnouncementInfo {
   updatedAt?: string;
 }
 
+export interface FeedbackAttachment {
+  id?: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  dataUrl: string;
+}
+
 export interface FeedbackSubmitResult {
   ok: boolean;
   feedback?: {
@@ -200,6 +208,7 @@ export interface FeedbackSubmitResult {
     deviceId: string;
     username?: string;
     content: string;
+    attachments?: FeedbackAttachment[];
     status: "open" | "closed";
     createdAt: string;
     updatedAt: string;
@@ -214,7 +223,7 @@ export interface GardenApi {
   checkForUpdate: () => Promise<UpdateInfo>;
   openUpdateDownload: (url: string, sha256?: string) => Promise<void>;
   getAnnouncement: () => Promise<AnnouncementInfo>;
-  submitFeedback: (content: string) => Promise<FeedbackSubmitResult>;
+  submitFeedback: (content: string, attachments?: FeedbackAttachment[]) => Promise<FeedbackSubmitResult>;
   getPlatformStatus: () => Promise<PlatformStatus>;
   registerAccount: (username: string, password: string) => Promise<AuthResult>;
   loginAccount: (username: string, password: string) => Promise<AuthResult>;

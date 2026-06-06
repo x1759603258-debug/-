@@ -92,9 +92,18 @@ export interface FeedbackRecord {
   deviceId: string;
   username?: string;
   content: string;
+  attachments?: FeedbackAttachment[];
   status: "open" | "closed";
   createdAt: string;
   updatedAt: string;
+}
+
+export interface FeedbackAttachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  dataUrl: string;
 }
 
 interface StoreData {
@@ -1346,9 +1355,36 @@ export async function consumeQuota(
   await writeStore(data);
 }
 
-export async function createFeedback(deviceId: string, content: string) {
+function normalizeFeedbackAttachments(attachments: unknown): FeedbackAttachment[] {
+  if (!Array.isArray(attachments)) return [];
+  const normalized: FeedbackAttachment[] = [];
+  attachments
+    .slice(0, 3)
+    .forEach((item) => {
+      if (!item || typeof item !== "object") return;
+      const file = item as { name?: unknown; mimeType?: unknown; size?: unknown; dataUrl?: unknown };
+      const name = String(file.name ?? "screenshot.jpg").slice(0, 80);
+      const mimeType = String(file.mimeType ?? "");
+      const dataUrl = String(file.dataUrl ?? "");
+      const size = Number(file.size ?? 0);
+      if (!mimeType.startsWith("image/")) return;
+      if (!dataUrl.startsWith("data:image/")) return;
+      if (!Number.isFinite(size) || size <= 0 || size > 512 * 1024) return;
+      normalized.push({
+        id: randomUUID(),
+        name,
+        mimeType,
+        size,
+        dataUrl
+      });
+    });
+  return normalized;
+}
+
+export async function createFeedback(deviceId: string, content: string, attachments: unknown = []) {
   const trimmed = content.trim();
-  if (trimmed.length < 2) {
+  const files = normalizeFeedbackAttachments(attachments);
+  if (trimmed.length < 2 && files.length === 0) {
     throw new Error("反馈内容太短啦。");
   }
   if (trimmed.length > 1000) {
@@ -1358,8 +1394,26 @@ export async function createFeedback(deviceId: string, content: string) {
   const data = await readStore();
   let device = data.devices[deviceId];
   if (!device) {
-    device = await ensureDevice(deviceId);
+    device = {
+      deviceId,
+      createdAt: now(),
+      guestChatLimit: GUEST_CHAT_LIMIT,
+      guestImageLimit: GUEST_IMAGE_LIMIT,
+      guestChatUsed: 0,
+      guestImageUsed: 0,
+      trialChatLimit: TRIAL_CHAT_LIMIT,
+      trialImageLimit: TRIAL_IMAGE_LIMIT,
+      trialChatUsed: 0,
+      trialImageUsed: 0,
+      dailyChatUsed: 0,
+      dailyImageUsed: 0,
+      checkinChatBonus: 0,
+      checkinImageBonus: 0,
+      checkinCycleDay: 0,
+      lastUsageDate: today()
+    };
   }
+  normalizeDevice(device);
   data.devices[deviceId] = device;
   const account = accountForDevice(data, deviceId);
   const createdAt = now();
@@ -1368,6 +1422,7 @@ export async function createFeedback(deviceId: string, content: string) {
     deviceId,
     username: account?.username,
     content: trimmed,
+    attachments: files.length ? files : undefined,
     status: "open",
     createdAt,
     updatedAt: createdAt

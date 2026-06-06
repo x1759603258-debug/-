@@ -1,6 +1,7 @@
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { DragEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Shell, PageKey } from "./components/Shell";
-import { AnnouncementInfo, AttachmentInput, gardenApi, PlatformStatus, UpdateInfo } from "./lib/desktopApi";
+import { AnnouncementInfo, AttachmentInput, FeedbackAttachment, gardenApi, PlatformStatus, UpdateInfo } from "./lib/desktopApi";
+import { canAddFeedbackImages, feedbackImageFromFile, feedbackImageLimitText } from "./lib/feedbackImages";
 import { getTimeTheme, TimeTheme } from "./lib/timeTheme";
 import { ChatPage } from "./pages/ChatPage";
 import { DreamPage } from "./pages/DreamPage";
@@ -59,6 +60,7 @@ export default function App() {
   const [announcement, setAnnouncement] = useState<ActiveAnnouncement>();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackImages, setFeedbackImages] = useState<FeedbackAttachment[]>([]);
   const [feedbackSending, setFeedbackSending] = useState(false);
   const seenAnnouncementIdsRef = useRef(new Set<string>());
   const startupUpdateNotes = useMemo(() => splitUpdateNotes(startupUpdate?.releaseNotes), [startupUpdate?.releaseNotes]);
@@ -180,39 +182,87 @@ export default function App() {
   const [previousTheme, setPreviousTheme] = useState<TimeTheme>(theme);
   const [themeFading, setThemeFading] = useState(false);
   const themeTimerRef = useRef<number | undefined>(undefined);
+  async function addFeedbackImages(fileList: FileList | File[]) {
+    const incoming = Array.from(fileList).filter((file) => file.type.startsWith("image/"));
+    if (!incoming.length) {
+      showToast("反馈只支持拖入图片。", "bad");
+      return;
+    }
+    if (!canAddFeedbackImages(feedbackImages, incoming.length)) {
+      showToast(feedbackImageLimitText, "bad");
+      return;
+    }
+    try {
+      const nextImages = await Promise.all(incoming.map((file) => feedbackImageFromFile(file)));
+      setFeedbackImages((current) => [...current, ...nextImages]);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "图片读取失败。", "bad");
+    }
+  }
+
+  function dropFeedbackImage(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    void addFeedbackImages(event.dataTransfer.files);
+  }
+
   const feedbackButton = (
-    <div className={`flower-support ${feedbackOpen ? "open" : ""}`}>
-      <button className="flower-support-button" type="button" onClick={() => setFeedbackOpen((open) => !open)} aria-label="打开用户反馈">
+    <div
+      className={`flower-support ${feedbackOpen ? "open" : ""}`}
+      onMouseEnter={() => setFeedbackOpen(true)}
+      onMouseLeave={() => {
+        if (!feedbackText.trim() && feedbackImages.length === 0 && !feedbackSending) setFeedbackOpen(false);
+      }}
+    >
+      <button className="flower-support-button" type="button" onClick={() => setFeedbackOpen(true)} aria-label="打开用户反馈">
         <span className="flower-support-bloom">✿</span>
         <span className="flower-support-label">小花反馈</span>
       </button>
       {feedbackOpen && (
-        <section className="flower-support-card">
+        <section className="flower-support-card" onDragOver={(event) => event.preventDefault()} onDrop={dropFeedbackImage}>
           <span className="eyebrow">{"小花客服"}</span>
           <h3>{"遇到问题了吗？"}</h3>
-          <p>{"把问题写给我们，小花会把纸条送到管理端。"}</p>
+          <p>{"把问题写给我们，小花会把纸条送到开发者。"}</p>
           <textarea
             value={feedbackText}
             onChange={(event) => setFeedbackText(event.target.value)}
             placeholder="例如：花映生成太慢 / 激活码不能用 / 想反馈一个小建议..."
             rows={5}
           />
+          <div className={`flower-support-drop ${feedbackImages.length ? "has-images" : ""}`}>
+            <span>{feedbackImages.length ? "已添加截图" : "把截图拖到这里，小花一起送过去"}</span>
+            {feedbackImages.length > 0 && (
+              <div className="flower-support-thumbs">
+                {feedbackImages.map((image, index) => (
+                  <button
+                    type="button"
+                    key={`${image.name}-${index}`}
+                    onClick={() => setFeedbackImages((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                    aria-label={`移除 ${image.name}`}
+                  >
+                    <img src={image.dataUrl} alt={image.name} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div>
             <button
               className="primary-button"
               type="button"
               disabled={feedbackSending}
               onClick={async () => {
-                if (!feedbackText.trim()) {
-                  showToast("先写一点问题内容呀～", "bad");
+                if (!feedbackText.trim() && feedbackImages.length === 0) {
+                  showToast("先写一点问题内容，或拖入截图呀～", "bad");
                   return;
                 }
                 try {
                   setFeedbackSending(true);
-                  await gardenApi.submitFeedback(feedbackText);
+                  await gardenApi.submitFeedback(feedbackText, feedbackImages);
                   setFeedbackText("");
+                  setFeedbackImages([]);
                   setFeedbackOpen(false);
-                  showToast("小花收到啦，会尽快送到管理端～");
+                  showToast("小花收到啦，会尽快送到开发者～");
                 } catch (error) {
                   showToast(error instanceof Error ? error.message : "反馈发送失败。", "bad");
                 } finally {
