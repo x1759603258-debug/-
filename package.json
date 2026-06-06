@@ -1,0 +1,81 @@
+{
+  "name": "ai-poetry-garden",
+  "version": "0.1.9",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "build:electron": "tsc -p tsconfig.electron.json && node -e \"require('node:fs').copyFileSync('electron/preload.mjs','dist-electron/preload.mjs')\"",
+    "dev": "npm run build:electron && concurrently --raw \"cd server && npm run dev\" \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5317 http://127.0.0.1:8888/health && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5317 PLATFORM_BASE_URL=http://127.0.0.1:8888 electron . --platform-base-url=http://127.0.0.1:8888\"",
+    "build": "tsc && vite build && npm run build:electron",
+    "preview": "vite preview",
+    "package": "npm run build && electron-builder",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "lucide-react": "latest",
+    "mammoth": "^1.12.0",
+    "pdf-parse": "^2.4.5",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-markdown": "latest",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "concurrently": "latest",
+    "cross-env": "latest",
+    "electron": "latest",
+    "electron-builder": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "wait-on": "latest"
+  },
+  "build": {
+    "appId": "com.poetrygarden.ai",
+    "productName": "晚薰",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "assets/icons/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/icons",
+        "to": "assets/icons"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icons/logo.ico",
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icons/logo.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icons/logo.png"
+    },
+    "asarUnpack": [
+      "node_modules/@napi-rs/canvas/**/*.node",
+      "node_modules/@napi-rs/canvas/**/*.dll"
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "晚薰",
+      "artifactName": "wanxun-setup-v${version}.${ext}"
+    }
+  }
+}

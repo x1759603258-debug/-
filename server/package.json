@@ -1,0 +1,24 @@
+{
+  "name": "ai-poetry-garden-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "smoke:proxy": "tsx src/proxy.smoke.ts",
+    "smoke:quota": "tsx src/quota.smoke.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fastify/cors": "latest",
+    "dotenv": "latest",
+    "fastify": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
